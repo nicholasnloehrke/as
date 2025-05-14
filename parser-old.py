@@ -3,29 +3,26 @@ from ply.yacc import yacc
 
 
 class Parser:
-    reserved = {
-        "add": "ADD",
-        "sub": "SUB",
-        "slt": "SLT",
-        "li": "LI",
-        "lw": "LW",
-        "sw": "SW",
-        "beq": "BEQ",
-        "bne": "BNE",
-        "push": "PUSH",
-        "pop": "POP",
-        "j": "J",
-        "jal": "JAL",
-        "jr": "JR",
-    }
-
     tokens = (
         "REGISTER",
         "NUMBER",
         "COMMA",
         "LABEL",
-        "ID",
-    ) + tuple(reserved.values())
+        "IDENTIFIER",
+        "ADD",
+        "SUB",
+        "SLT",
+        "LI",
+        "LW",
+        "SW",
+        "BEQ",
+        "BNE",
+        "PUSH",
+        "POP",
+        "J",
+        "JAL",
+        "JR",
+    )
 
     def __init__(self):
         self._lexer = lex(module=self)
@@ -33,6 +30,7 @@ class Parser:
 
     def t_REGISTER(self, t):
         r"D[0-3]"
+
         return t
 
     def t_NUMBER(self, t):
@@ -41,21 +39,28 @@ class Parser:
         if value > 31 or value < 0:
             print(f"'{value}' out of range. Expected 0 <= value <= 31")
             self.t_error(t)
+
         t.value = value
-        return t
 
-    def t_LABEL(self, t):
-        r"[a-zA-Z_][a-zA-Z0-9_]*:"
-        t.value = t.value[:-1]  # strip colon
-        return t
-
-    def t_ID(self, t):
-        r"[a-zA-Z_][a-zA-Z0-9_]*"
-        t.type = self.reserved.get(t.value, "ID")
         return t
 
     t_COMMA = r","
     t_ignore = " \t"
+    t_LABEL = r"[a-zA-Z_][a-zA-Z0-9_]*:"
+    t_IDENTIFIER = r"[a-zA-Z_][a-zA-Z0-9_]*"
+    t_ADD = r"add"
+    t_SUB = r"sub"
+    t_SLT = r"slt"
+    t_LI = r"li"
+    t_LW = r"lw"
+    t_SW = r"sw"
+    t_BEQ = r"beq"
+    t_BNE = r"bne"
+    t_PUSH = r"push"
+    t_POP = r"pop"
+    t_J = r"j"
+    t_JAL = r"jal"
+    t_JR = r"jr"
 
     def t_COMMENT(self, _):
         r"\#.*"
@@ -68,16 +73,24 @@ class Parser:
     def t_error(self, t):
         line = t.lineno
         column = self.find_column(t.lexer.lexdata, t)
+
         line_start = t.lexer.lexdata.rfind("\n", 0, t.lexpos) + 1
         line_end = t.lexer.lexdata.find("\n", t.lexpos)
         if line_end == -1:
             line_end = len(t.lexer.lexdata)
         error_line = t.lexer.lexdata[line_start:line_end]
+
         pointer = " " * (column - 1) + "^"
+
         raise ValueError(
             f"Illegal character '{t.value[0]}' at line {line}, column {column}:\n"
             f"{error_line}\n{pointer}"
         )
+
+    # def p_program(self, p):
+    #     """program : instruction
+    #     | instruction program"""
+    #     p[0] = [p[1]] if len(p) == 2 else [p[1]] + p[2]
 
     def p_program(self, p):
         """program : instruction
@@ -90,11 +103,14 @@ class Parser:
         | j_type
         | LABEL r_type
         | LABEL i_type
-        | LABEL j_type"""
+        | LABEL j_type
+        """
+        # p[0] = p[1]
+
         if len(p) == 2:
             p[0] = p[1]
         else:
-            p[0] = ("label", p[1], p[2])  # e.g., ('label', 'start', ('li', 'D0', 5))
+            p[0] = ("label", p[1], p[2])  # ('label', label_name, instruction)
 
     def p_r_type(self, p):
         """r_type : ADD REGISTER COMMA REGISTER COMMA REGISTER
@@ -115,25 +131,15 @@ class Parser:
         | POP REGISTER"""
         p[0] = (p[1], p[2])
 
-    # def p_j_type(self, p):
-    #     """j_type : J NUMBER
-    #     | J ID
-    #     | JAL NUMBER
-    #     | JAL ID"""
-    #     p[0] = (p[1], p[2])
-
     def p_j_type(self, p):
         """j_type : J NUMBER
-        | J ID
+        | J IDENTIFIER
         | JAL NUMBER
-        | JAL ID"""
-        if isinstance(p[2], int):
-            p[0] = (p[1], p[2])  # resolved address
-        else:
-            p[0] = (p[1], ("label_ref", p[2]))  # mark as needing label resolution
+        | JAL IDENTIFIER"""
+        p[0] = (p[1], p[2])
 
     def p_j_type_jr(self, p):
-        "j_type : JR"
+        """j_type : JR"""
         p[0] = (p[1],)
 
     def p_error(self, p):
@@ -141,6 +147,7 @@ class Parser:
             token = "end of file"
         else:
             token = f"{p.type}({p.value}) on line {p.lineno}"
+
         raise ValueError(f"Syntax error: Unexpected {token}")
 
     def find_column(self, input, token):
