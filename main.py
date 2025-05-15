@@ -1,21 +1,20 @@
 import argparse
 from parser import Parser
 
-
 opcode_map = {
-    "li": 0b0001,
-    "lw": 0b0010,
-    "sw": 0b0011,
-    "add": 0b0100,
-    "sub": 0b0101,
-    "slt": 0b0110,
-    "beq": 0b0111,
-    "bne": 0b1000,
-    "j": 0b1001,
-    "jal": 0b1010,
-    "jr": 0b1011,
-    "push": 0b1100,
-    "pop": 0b1101,
+    "add": 0b0000,
+    "sub": 0b0001,
+    "slt": 0b0010,
+    "li": 0b0011,
+    "lw": 0b0100,
+    "sw": 0b0101,
+    "beq": 0b0110,
+    "bne": 0b0111,
+    "push": 0b1000,
+    "pop": 0b1001,
+    "j": 0b1010,
+    "jal": 0b1011,
+    "jr": 0b1100,
 }
 
 
@@ -53,7 +52,7 @@ def encode_instruction(instr):
 
     elif op in ("j", "jal"):
         addr = instr[1] & 0b11111
-        return (opcode << 7) | (0 << 5) | addr  # no Dsel for jumps
+        return (opcode << 7) | (0 << 5) | addr  # no Dt for jumps
 
     elif op == "jr":
         return opcode << 7
@@ -109,6 +108,9 @@ def main():
         code = f.read()
 
     try:
+        ast = Parser().parse(code)
+        for line in ast:
+            print(line)
         assemble(Parser(), code)
 
     except Exception as e:
