@@ -100,7 +100,7 @@ class Parser:
             p[0] = [p[1]]
         else:
             p[0] = [p[1]] + p[2]
-            
+
     def p_instruction(self, p):
         """instruction : r_type
         | i_type
@@ -115,7 +115,7 @@ class Parser:
             p[0] = ("instr", p[1], pos)
         else:
             p[0] = ("label", p[1], ("instr", p[2], pos))
-            
+
     def p_nop_type(self, p):
         "nop_type : NOP"
         p[0] = (p[1],)
