@@ -6,7 +6,7 @@
 
 `as.py <infile> -o <outfile>`
 
-Example:
+### Example
 
 ```
 # cat main.s
@@ -84,7 +84,7 @@ CONTENT BEGIN
 END;
 ```
 
-### Error messages
+#### Error messages
 
 Error messages are pretty ok except for non-existant labels. Those are buggy.
 
