@@ -86,8 +86,6 @@ END;
 
 #### Error messages
 
-Error messages are pretty ok except for non-existant labels. Those are buggy.
-
 ```
 # cat main.s
 li  D0, 34

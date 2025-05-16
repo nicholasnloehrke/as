@@ -1,8 +1,27 @@
 #!/usr/bin/env python3
 
 import argparse
+import logging
 from parser import Parser
 import sys
+
+
+class ColumnAlignFormatter(logging.Formatter):
+    def format(self, record):
+        level = f"[{record.levelname}]"
+        func_and_line = f"[{record.funcName}:{record.lineno}]"
+
+        level_padded = f"{level:<9}"
+        func_padded = f"{func_and_line:<20}"
+
+        return f"{level_padded} {func_padded} {record.getMessage()}"
+
+
+logger = logging.getLogger()
+handler = logging.StreamHandler()
+handler.setFormatter(ColumnAlignFormatter())
+logger.setLevel(logging.DEBUG)
+logger.handlers = [handler]
 
 opcode_map = {
     "add": 0b0000,
@@ -68,14 +87,14 @@ def encode_instruction(instr):
         raise ValueError(f"Unhandled instruction: {instr}")
 
 
-def to_mif(instructions, outfile=None):
+def to_mif(instructions, infile=None, outfile=None):
     if len(instructions) > 32:
         RED = "\033[31m"
         BOLD = "\033[1m"
         RESET = "\033[0m"
 
         print(
-            f"{RED}{BOLD}{outfile + ': ' if outfile else ''}error: out of RAM. Used {len(instructions)} of 32 words{RESET}"
+            f"{BOLD}{infile + ': ' if infile else ''}{RESET}{RED}error:{RESET} memory limit 32 words, used {len(instructions)}."
         )
         sys.exit(1)
 
@@ -114,11 +133,20 @@ CONTENT BEGIN
         print(content)
 
 
+def set_log_level(level):
+    logger.setLevel(level)
+    for handler in logger.handlers:
+        handler.setLevel(level)
+
+
 def main():
     argparser = argparse.ArgumentParser()
     argparser.add_argument("infile", help="Input file")
     argparser.add_argument("-o", help="Output file")
+    argparser.add_argument("-v", action="store_true", help="Verbose mode")
     args = argparser.parse_args()
+
+    set_log_level(logging.DEBUG if args.v else logging.WARNING)
 
     with open(args.infile) as f:
         code = f.read()
@@ -126,7 +154,7 @@ def main():
     parser = Parser()
     parsed = parser.parse(code, file_name=args.infile)
 
-    to_mif(parsed, args.o)
+    to_mif(parsed, args.infile, args.o)
 
 
 if __name__ == "__main__":
