@@ -2,6 +2,7 @@
 
 ## Usage
 
+`as.py <infile>`
 `as.py <infile> -o <outfile>`
 
 Example:
