@@ -18,6 +18,7 @@ class Parser:
         "j": "J",
         "jal": "JAL",
         "jr": "JR",
+        "nop": "NOP",
     }
 
     tokens = (
@@ -99,19 +100,25 @@ class Parser:
             p[0] = [p[1]]
         else:
             p[0] = [p[1]] + p[2]
-
+            
     def p_instruction(self, p):
         """instruction : r_type
         | i_type
         | j_type
+        | nop_type
         | LABEL r_type
         | LABEL i_type
-        | LABEL j_type"""
+        | LABEL j_type
+        | LABEL nop_type"""
         pos = (p.lineno(1), p.lexpos(1))
         if len(p) == 2:
             p[0] = ("instr", p[1], pos)
         else:
             p[0] = ("label", p[1], ("instr", p[2], pos))
+            
+    def p_nop_type(self, p):
+        "nop_type : NOP"
+        p[0] = (p[1],)
 
     def p_r_type(self, p):
         """r_type : ADD REGISTER COMMA REGISTER COMMA REGISTER
