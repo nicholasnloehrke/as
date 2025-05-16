@@ -99,6 +99,15 @@ main.s:1:10: error: value of '34' is out of range.
 
 ```
 # cat main.s
+li  D5, 31
+# ./as.py main.s
+main.s:1:6: error: invalid token 'D5'
+    1 | li  D5, 31
+      |     ^~
+```
+
+```
+# cat main.s
 start:
         li  D0, 31
         j   oops_mispeled
